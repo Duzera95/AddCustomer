@@ -1,0 +1,85 @@
+<?php
+
+namespace App\Console\Commands;
+
+use Illuminate\Console\Command;
+use App\Models\CustomerCluster; 
+class AddCustomerCluster extends Command
+{
+    /**
+     * The name and signature of the console command.
+     *
+     * @var string
+     */
+    protected $signature = 'AddCustomerCluster:load {segment_number} {classcommerc_code}  {documentnr?} ';
+
+    /**
+     * The console command description.
+     *
+     * @var string
+     */
+    protected $description = 'Adiciona o cliente na tabela customer_cluster';
+
+    /**
+     * Execute the console command.
+     */
+    public function handle()
+    {
+        
+        $segmentNumber = $this->argument('segment_number');
+        $classcommerc_code = $this->argument('classcommerc_code');
+        $policyCNPJ = [29272043000108,
+            21954045000175,
+            53257066000128,
+            25060940000105,
+            53528266000178,
+            44943965000193];
+
+        // Processa os clientes na tabela customer_cluster
+      
+        $this->processCustomer($policyCNPJ, $segmentNumber, $classcommerc_code);
+    }
+
+    /**
+     * Onde realmente é processado para a tabela customer_cluster
+     *
+     * @param int $documentnr
+     * @param int $segmentNumber
+     * @param int $policyCode
+     */
+    protected function processCustomer($documentnr, $segmentNumber, int $classcommerc_code)
+    {
+        // Converte os argumentos para string, se necessário
+        
+        $segmentNumber = (int)$segmentNumber;
+        $classcommerc_code = (int)$classcommerc_code;
+
+   
+        foreach ($documentnr as $document) {
+
+            $this->info("Processando cliente: " . $document);
+            $this->info("Segmento: " . $segmentNumber);
+            $this->info("Política de Preço: " . $classcommerc_code);
+
+            // Insere os dados na tabela customer_clusters usando Eloquent
+            try {
+                $customerCluster = CustomerCluster::updateOrCreate(
+                    [
+                        'documentnr' => $document,
+                        'segment_number' => $segmentNumber,
+                        'classcommerc_code' => $classcommerc_code,
+                    ]
+                );
+
+                // Outras operações após o updateOrCreate() bem-sucedido
+            } catch (\Exception $e) {
+                // Lidar com a exceção
+                // Por exemplo, você pode registrar a exceção, notificar o administrador, ou executar outra ação apropriada
+                // Exemplo de registro de exceção:
+                Log::error('Ocorreu um erro durante a atualização ou criação do CustomerCluster: ' . $e->getMessage());
+            }
+
+            $this->info("Cliente $document adicionado à tabela customer_clusters.");
+        }
+    }
+}
